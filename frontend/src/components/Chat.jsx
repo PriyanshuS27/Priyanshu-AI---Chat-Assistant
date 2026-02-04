@@ -25,7 +25,7 @@ export default function Chat() {
     setInput("");
     setLoading(true);
 
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    const API_URL = 'https://Priyanshu-AI---Chat-Assistant.mepriyanshu27.repl.co';
 
     try {
       const res = await fetch(`${API_URL}/chat`, {
