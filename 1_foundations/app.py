@@ -568,6 +568,10 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     reply: str
 
+@app.get("/")
+def root():
+    return {"message": "Priyanshu AI Backend is running!", "version": "1.0"}
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
