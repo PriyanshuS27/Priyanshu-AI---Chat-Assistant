@@ -23,15 +23,16 @@ load_dotenv(override=True)
 # Basic structured logging so we can diagnose push failures and tool calls
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
-try:
-    import google.genai as _genai_diag
-    logging.info("google.genai version: %s", getattr(_genai_diag, "__version__", "unknown"))
-    logging.info(
-        "google.genai attrs: %s",
-        ",".join([a for a in dir(_genai_diag) if 'generate' in a.lower() or 'generative' in a.lower()])
-    )
-except Exception as _e:
-    logging.warning("Failed to import google.genai for diagnostics: %s", _e)
+# Diagnostic block - google.genai doesn't exist, using google.generativeai instead
+# try:
+#     import google.genai as _genai_diag
+#     logging.info("google.genai version: %s", getattr(_genai_diag, "__version__", "unknown"))
+#     logging.info(
+#         "google.genai attrs: %s",
+#         ",".join([a for a in dir(_genai_diag) if 'generate' in a.lower() or 'generative' in a.lower()])
+#     )
+# except Exception as _e:
+#     logging.warning("Failed to import google.genai for diagnostics: %s", _e)
 
 # Basic structured logging so we can diagnose push failures and tool calls
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
