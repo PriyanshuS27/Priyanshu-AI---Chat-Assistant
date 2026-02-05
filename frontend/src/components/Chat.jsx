@@ -2,6 +2,8 @@ import { useState } from "react";
 import "./Chat.css";
 
 export default function Chat() {
+  // Chat component for Priyanshu AI Assistant
+  // Backend: Render.com (permanent free hosting)
   const [messages, setMessages] = useState([
     { role: "bot", text: "👋 Hi! I'm Priyanshu AI. Ask me anything about my background, skills, and experience." }
   ]);
