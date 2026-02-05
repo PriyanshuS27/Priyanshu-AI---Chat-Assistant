@@ -328,12 +328,14 @@
 
         /* ===== QUICK ACTIONS ===== */
         .quick-actions {
-            padding: 16px 20px;
+            padding: 12px 16px;
             border-top: 1px solid #e5e7eb;
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
             justify-content: center;
+            max-height: auto;
+            overflow-y: visible;
         }
 
         .light-mode .quick-actions {
@@ -735,8 +737,8 @@
             .quick-actions {
                 padding: 8px 10px;
                 gap: 6px;
-                max-height: 120px;
-                overflow-y: auto;
+                max-height: auto;
+                overflow-y: visible;
             }
 
             .action-btn {
@@ -802,7 +804,8 @@
             .quick-actions {
                 padding: 6px 8px;
                 gap: 4px;
-                max-height: 100px;
+                max-height: auto;
+                overflow-y: visible;
             }
 
             .action-btn {
@@ -892,10 +895,10 @@
                 try {
                     const saved = sessionStorage.getItem('chat_messages');
                     return saved ? JSON.parse(saved) : [
-                        { id: 1, role: "bot", text: "👋 Hi! How can I help you?", timestamp: new Date() }
+                        { id: 1, role: "bot", text: "Hi! I'm Priyanshu's AI Copilot.\n\nThink of me as your quick guide to his skills, projects, and real-world experience.\n\nGo ahead — ask me anything you'd like to know about his work.", timestamp: new Date() }
                     ];
                 } catch {
-                    return [{ id: 1, role: "bot", text: "👋 Hi! How can I help you?", timestamp: new Date() }];
+                    return [{ id: 1, role: "bot", text: "Hi! I'm Priyanshu's AI Copilot.\n\nThink of me as your quick guide to his skills, projects, and real-world experience.\n\nGo ahead — ask me anything you'd like to know about his work.", timestamp: new Date() }];
                 }
             });
             const [input, setInput] = useState("");
@@ -1090,7 +1093,7 @@
                                 {darkMode ? '☀️' : '🌙'}
                             </button>
                             <button className="header-btn" onClick={() => {
-                                setMessages([{ id: 1, role: "bot", text: "👋 Hi! How can I help you?", timestamp: new Date() }]);
+                                setMessages([{ id: 1, role: "bot", text: "Hi! I'm Priyanshu's AI Copilot.\n\nThink of me as your quick guide to his skills, projects, and real-world experience.\n\nGo ahead — ask me anything you'd like to know about his work.", timestamp: new Date() }]);
                                 showToast("Chat cleared!");
                             }} title="Clear chat">
                                 🗑️
