@@ -895,10 +895,10 @@
                 try {
                     const saved = sessionStorage.getItem('chat_messages');
                     return saved ? JSON.parse(saved) : [
-                        { id: 1, role: "bot", text: "Hi! I'm Priyanshu's AI Copilot.\n\nThink of me as your quick guide to his skills, projects, and real-world experience.\n\nGo ahead — ask me anything you'd like to know about his work.", timestamp: new Date() }
+                        { id: 1, role: "bot", text: "👋 Hi! I'm Priyanshu's AI Copilot.\n\nThink of me as your quick guide to his skills, projects, and real-world experience.\n\nGo ahead — ask me anything you'd like to know about his work.", timestamp: new Date() }
                     ];
                 } catch {
-                    return [{ id: 1, role: "bot", text: "Hi! I'm Priyanshu's AI Copilot.\n\nThink of me as your quick guide to his skills, projects, and real-world experience.\n\nGo ahead — ask me anything you'd like to know about his work.", timestamp: new Date() }];
+                    return [{ id: 1, role: "bot", text: "👋 Hi! I'm Priyanshu's AI Copilot.\n\nThink of me as your quick guide to his skills, projects, and real-world experience.\n\nGo ahead — ask me anything you'd like to know about his work.", timestamp: new Date() }];
                 }
             });
             const [input, setInput] = useState("");
@@ -1093,7 +1093,7 @@
                                 {darkMode ? '☀️' : '🌙'}
                             </button>
                             <button className="header-btn" onClick={() => {
-                                setMessages([{ id: 1, role: "bot", text: "Hi! I'm Priyanshu's AI Copilot.\n\nThink of me as your quick guide to his skills, projects, and real-world experience.\n\nGo ahead — ask me anything you'd like to know about his work.", timestamp: new Date() }]);
+                                setMessages([{ id: 1, role: "bot", text: "👋 Hi! I'm Priyanshu's AI Copilot.\n\nThink of me as your quick guide to his skills, projects, and real-world experience.\n\nGo ahead — ask me anything you'd like to know about his work.", timestamp: new Date() }]);
                                 showToast("Chat cleared!");
                             }} title="Clear chat">
                                 🗑️
