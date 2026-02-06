@@ -86,12 +86,13 @@
         .header-info h2 {
             font-size: 16px;
             font-weight: 700;
-            margin-bottom: 2px;
+            margin-bottom: 0px;
         }
 
         .header-info p {
             font-size: 12px;
             opacity: 0.9;
+            display: none;
         }
 
         .status-dot {
@@ -99,7 +100,7 @@
             height: 6px;
             background: #10b981;
             border-radius: 50%;
-            display: inline-block;
+            display: none;
             margin-right: 4px;
         }
 
@@ -801,17 +802,48 @@
         }
 
         @media (max-width: 480px) {
+            .chat-header {
+                padding: 8px 10px;
+            }
+
+            .header-left {
+                gap: 8px;
+            }
+
+            .avatar {
+                width: 36px;
+                height: 36px;
+                font-size: 16px;
+            }
+
+            .header-info h2 {
+                font-size: 12px;
+                margin-bottom: 0px;
+            }
+
+            .header-info p {
+                display: none;
+                font-size: 10px;
+            }
+
+            .header-btn {
+                width: 28px;
+                height: 28px;
+                font-size: 12px;
+            }
+
             .quick-actions {
-                padding: 6px 8px;
+                padding: 6px 10px;
                 gap: 4px;
                 max-height: auto;
                 overflow-y: visible;
             }
 
             .action-btn {
-                padding: 6px 10px;
-                font-size: 11px;
+                padding: 5px 8px;
+                font-size: 10px;
                 flex: 1 1 calc(50% - 2px);
+                min-height: 28px;
             }
 
             .message-wrapper {
@@ -828,37 +860,9 @@
                 font-size: 12px;
             }
 
-            .chat-header {
-                padding: 8px 12px;
-            }
-
-            .header-left {
-                gap: 8px;
-            }
-
-            .avatar {
-                width: 36px;
-                height: 36px;
-                font-size: 18px;
-            }
-
-            .header-info h2 {
-                font-size: 12px;
-            }
-
-            .header-info p {
-                font-size: 10px;
-            }
-
-            .header-btn {
-                width: 28px;
-                height: 28px;
-                font-size: 12px;
-            }
-
             .chat-input-area {
-                padding: 8px;
-                gap: 6px;
+                padding: 8px 10px;
+                gap: 4px;
             }
 
             .input-icons {
@@ -869,17 +873,26 @@
                 width: 28px;
                 height: 28px;
                 font-size: 12px;
+                flex-shrink: 0;
             }
 
             .send-btn {
                 width: 32px;
                 height: 32px;
                 font-size: 14px;
+                flex-shrink: 0;
             }
 
             .chat-input {
                 padding: 8px 10px;
                 font-size: 16px;
+                min-height: 32px;
+            }
+
+            .input-wrapper {
+                display: flex;
+                gap: 4px;
+                align-items: center;
             }
         }
     </style>
@@ -1065,10 +1078,16 @@
                 <div className={`chat-container ${darkMode ? 'dark-mode' : 'light-mode'}`}>
                     <div className="chat-header">
                         <div className="header-left">
-                            <div className="avatar">👨‍💼</div>
+                            <div className="avatar">
+                                <img src="/avatar.png" alt="Priyanshu Avatar" style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    borderRadius: '50%',
+                                    objectFit: 'cover'
+                                }} />
+                            </div>
                             <div className="header-info">
                                 <h2>Chat with Priyanshu</h2>
-                                <p><span className="status-dot"></span>We are online!</p>
                             </div>
                         </div>
                         <div className="header-actions">
@@ -1093,8 +1112,10 @@
                                 {darkMode ? '☀️' : '🌙'}
                             </button>
                             <button className="header-btn" onClick={() => {
-                                setMessages([{ id: 1, role: "bot", text: "👋 Hi! I'm Priyanshu's AI Copilot.\n\nThink of me as your quick guide to his skills, projects, and real-world experience.\n\nGo ahead — ask me anything you'd like to know about his work.", timestamp: new Date() }]);
-                                showToast("Chat cleared!");
+                                if (window.confirm('Do you want to clear the chat history?')) {
+                                    setMessages([{ id: 1, role: "bot", text: "👋 Hi! I'm Priyanshu's AI Copilot.\n\nThink of me as your quick guide to his skills, projects, and real-world experience.\n\nGo ahead — ask me anything you'd like to know about his work.", timestamp: new Date() }]);
+                                    showToast("Chat cleared!");
+                                }
                             }} title="Clear chat">
                                 🗑️
                             </button>
