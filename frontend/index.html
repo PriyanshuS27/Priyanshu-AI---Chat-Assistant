@@ -55,7 +55,7 @@
 
         /* ===== HEADER ===== */
         .chat-header {
-            padding: 16px 20px;
+            padding: 14px 16px;
             background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%);
             color: white;
             display: flex;
@@ -67,7 +67,7 @@
         .header-left {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
         }
 
         .avatar {
@@ -81,12 +81,21 @@
             font-size: 24px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
             border: 2px solid rgba(255, 255, 255, 0.3);
+            object-fit: cover;
+        }
+
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
         }
 
         .header-info h2 {
             font-size: 16px;
             font-weight: 700;
-            margin-bottom: 0px;
+            margin-bottom: 0;
+            line-height: 1.2;
         }
 
         .header-info p {
@@ -100,7 +109,7 @@
             height: 6px;
             background: #10b981;
             border-radius: 50%;
-            display: none;
+            display: inline-block;
             margin-right: 4px;
         }
 
@@ -138,11 +147,11 @@
         /* ===== MESSAGES ===== */
         .chat-messages {
             flex: 1;
-            padding: 20px;
+            padding: 16px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 12px;
         }
 
         .chat-messages.light-mode {
@@ -178,7 +187,7 @@
         }
 
         .message-wrapper {
-            max-width: 65%;
+            max-width: 70%;
         }
 
         .message-wrapper:hover .message-bubble {
@@ -190,10 +199,10 @@
         }
 
         .message-bubble {
-            padding: 12px 16px;
-            border-radius: 16px;
-            font-size: 14px;
-            line-height: 1.5;
+            padding: 10px 14px;
+            border-radius: 14px;
+            font-size: 13px;
+            line-height: 1.4;
             word-wrap: break-word;
         }
 
@@ -329,10 +338,10 @@
 
         /* ===== QUICK ACTIONS ===== */
         .quick-actions {
-            padding: 12px 16px;
+            padding: 10px 12px;
             border-top: 1px solid #e5e7eb;
             display: flex;
-            gap: 8px;
+            gap: 6px;
             flex-wrap: wrap;
             justify-content: center;
             max-height: auto;
@@ -349,12 +358,12 @@
         }
 
         .action-btn {
-            padding: 10px 16px;
+            padding: 8px 12px;
             background: white;
             border: 2px solid #1E40AF;
             color: #1E40AF;
             border-radius: 24px;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
@@ -383,11 +392,11 @@
 
         /* ===== INPUT AREA ===== */
         .chat-input-area {
-            padding: 16px 20px;
+            padding: 12px 16px;
             border-top: 1px solid #e5e7eb;
             display: flex;
             align-items: flex-end;
-            gap: 12px;
+            gap: 10px;
             position: sticky;
             bottom: 0;
             z-index: 100;
@@ -802,48 +811,17 @@
         }
 
         @media (max-width: 480px) {
-            .chat-header {
-                padding: 8px 10px;
-            }
-
-            .header-left {
-                gap: 8px;
-            }
-
-            .avatar {
-                width: 36px;
-                height: 36px;
-                font-size: 16px;
-            }
-
-            .header-info h2 {
-                font-size: 12px;
-                margin-bottom: 0px;
-            }
-
-            .header-info p {
-                display: none;
-                font-size: 10px;
-            }
-
-            .header-btn {
-                width: 28px;
-                height: 28px;
-                font-size: 12px;
-            }
-
             .quick-actions {
-                padding: 6px 10px;
+                padding: 6px 8px;
                 gap: 4px;
                 max-height: auto;
                 overflow-y: visible;
             }
 
             .action-btn {
-                padding: 5px 8px;
-                font-size: 10px;
+                padding: 6px 10px;
+                font-size: 11px;
                 flex: 1 1 calc(50% - 2px);
-                min-height: 28px;
             }
 
             .message-wrapper {
@@ -860,9 +838,37 @@
                 font-size: 12px;
             }
 
+            .chat-header {
+                padding: 8px 10px;
+            }
+
+            .header-left {
+                gap: 8px;
+            }
+
+            .avatar {
+                width: 40px;
+                height: 40px;
+                font-size: 16px;
+            }
+
+            .header-info h2 {
+                font-size: 13px;
+            }
+
+            .header-info p {
+                font-size: 10px;
+            }
+
+            .header-btn {
+                width: 28px;
+                height: 28px;
+                font-size: 12px;
+            }
+
             .chat-input-area {
                 padding: 8px 10px;
-                gap: 4px;
+                gap: 6px;
             }
 
             .input-icons {
@@ -873,26 +879,41 @@
                 width: 28px;
                 height: 28px;
                 font-size: 12px;
-                flex-shrink: 0;
             }
 
             .send-btn {
                 width: 32px;
                 height: 32px;
                 font-size: 14px;
-                flex-shrink: 0;
             }
 
             .chat-input {
                 padding: 8px 10px;
                 font-size: 16px;
-                min-height: 32px;
             }
 
-            .input-wrapper {
-                display: flex;
+            .message-wrapper {
+                max-width: 85%;
+            }
+
+            .chat-messages {
+                padding: 10px;
+                gap: 8px;
+            }
+
+            .message-bubble {
+                padding: 8px 10px;
+                font-size: 12px;
+            }
+
+            .quick-actions {
+                padding: 6px 8px;
                 gap: 4px;
-                align-items: center;
+            }
+
+            .action-btn {
+                padding: 6px 10px;
+                font-size: 11px;
             }
         }
     </style>
@@ -1074,20 +1095,24 @@
                 }
             };
 
+            const clearChat = () => {
+                const confirmed = window.confirm("Do you want to clear the chat history?");
+                if (confirmed) {
+                    setMessages([{ id: 1, role: "bot", text: "👋 Hi! I'm Priyanshu's AI Copilot.\n\nThink of me as your quick guide to his skills, projects, and real-world experience.\n\nGo ahead — ask me anything you'd like to know about his work.", timestamp: new Date() }]);
+                    showToast("Chat cleared!");
+                }
+            };
+
             return (
                 <div className={`chat-container ${darkMode ? 'dark-mode' : 'light-mode'}`}>
                     <div className="chat-header">
                         <div className="header-left">
                             <div className="avatar">
-                                <img src="/avatar.png" alt="Priyanshu Avatar" style={{
-                                    width: '100%',
-                                    height: '100%',
-                                    borderRadius: '50%',
-                                    objectFit: 'cover'
-                                }} />
+                                <img src="/avatar.jpg" alt="Priyanshu" onError={(e) => {e.target.style.display='none'}} />
                             </div>
                             <div className="header-info">
                                 <h2>Chat with Priyanshu</h2>
+                                <p><span className="status-dot"></span>We are online!</p>
                             </div>
                         </div>
                         <div className="header-actions">
@@ -1111,12 +1136,7 @@
                             }} title="Toggle dark mode">
                                 {darkMode ? '☀️' : '🌙'}
                             </button>
-                            <button className="header-btn" onClick={() => {
-                                if (window.confirm('Do you want to clear the chat history?')) {
-                                    setMessages([{ id: 1, role: "bot", text: "👋 Hi! I'm Priyanshu's AI Copilot.\n\nThink of me as your quick guide to his skills, projects, and real-world experience.\n\nGo ahead — ask me anything you'd like to know about his work.", timestamp: new Date() }]);
-                                    showToast("Chat cleared!");
-                                }
-                            }} title="Clear chat">
+                            <button className="header-btn" onClick={clearChat} title="Clear chat">
                                 🗑️
                             </button>
                         </div>
