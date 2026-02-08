@@ -768,6 +768,28 @@
             50% { transform: scale(1.15); }
         }
 
+        @keyframes avatarWave {
+            0% {
+                transform: scale(1) rotateZ(0deg);
+            }
+            25% {
+                transform: scale(0.95) rotateZ(-15deg);
+            }
+            50% {
+                transform: scale(0.85) rotateZ(15deg);
+            }
+            75% {
+                transform: scale(0.95) rotateZ(-10deg);
+            }
+            100% {
+                transform: scale(1) rotateZ(0deg);
+            }
+        }
+
+        .avatar-waving {
+            animation: avatarWave 0.7s ease-in-out !important;
+        }
+
         /* Emoji styling */
         span[data-emoji] {
             display: inline-block;
@@ -1023,6 +1045,7 @@
             const [showEmojiPicker, setShowEmojiPicker] = useState(false);
             const [isRecording, setIsRecording] = useState(false);
             const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+            const [isAvatarHovered, setIsAvatarHovered] = useState(false);
             const messagesEndRef = useRef(null);
             const recognitionRef = useRef(null);
 
@@ -1190,7 +1213,11 @@
                 <div className={`chat-container ${darkMode ? 'dark-mode' : 'light-mode'}`}>
                     <div className="chat-header">
                         <div className="header-left">
-                            <div className="avatar">
+                            <div 
+                                className={`avatar ${isAvatarHovered ? 'avatar-waving' : ''}`}
+                                onMouseEnter={() => setIsAvatarHovered(true)}
+                                onMouseLeave={() => setIsAvatarHovered(false)}
+                            >
                                 <img src="/avatar.jpg" alt="Priyanshu" onError={(e) => {e.target.style.display='none'}} />
                             </div>
                             <div className="header-info">
