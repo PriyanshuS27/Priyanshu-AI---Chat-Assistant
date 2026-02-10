@@ -82,12 +82,6 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
             border: 2px solid rgba(255, 255, 255, 0.3);
             object-fit: cover;
-            cursor: pointer;
-            perspective: 1000px;
-        }
-
-        .avatar-waving {
-            animation: avatarZoomWave 0.8s ease-in-out !important;
         }
 
         .avatar img {
@@ -775,37 +769,6 @@
             50% { transform: scale(1.15); }
         }
 
-        @keyframes avatarZoomWave {
-            0% {
-                transform: scale(1) rotateZ(0deg) translateY(0);
-                filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.2));
-            }
-            15% {
-                transform: scale(1.15) rotateZ(-8deg) translateY(-8px);
-                filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3));
-            }
-            30% {
-                transform: scale(1.25) rotateZ(12deg) translateY(-12px);
-                filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.35));
-            }
-            50% {
-                transform: scale(1.25) rotateZ(-10deg) translateY(-12px);
-                filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.35));
-            }
-            70% {
-                transform: scale(1.15) rotateZ(8deg) translateY(-8px);
-                filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3));
-            }
-            100% {
-                transform: scale(1) rotateZ(0deg) translateY(0);
-                filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.2));
-            }
-        }
-
-        .avatar-waving {
-            animation: avatarZoomWave 0.8s ease-in-out !important;
-        }
-
         /* Emoji styling */
         span[data-emoji] {
             display: inline-block;
@@ -1061,9 +1024,9 @@
             const [showEmojiPicker, setShowEmojiPicker] = useState(false);
             const [isRecording, setIsRecording] = useState(false);
             const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-            const [isAvatarHovered, setIsAvatarHovered] = useState(false);
             const messagesEndRef = useRef(null);
             const recognitionRef = useRef(null);
+            const avatarVideoRef = useRef(null);
 
             const suggestions = [
                 "💼 Tell me about yourself",
@@ -1230,11 +1193,30 @@
                     <div className="chat-header">
                         <div className="header-left">
                             <div 
-                                className={`avatar ${isAvatarHovered ? 'avatar-waving' : ''}`}
-                                onMouseEnter={() => setIsAvatarHovered(true)}
-                                onMouseLeave={() => setIsAvatarHovered(false)}
+                                className="avatar"
+                                onMouseEnter={() => avatarVideoRef.current?.play()}
+                                onMouseLeave={() => {
+                                    if (avatarVideoRef.current) {
+                                        avatarVideoRef.current.pause();
+                                        avatarVideoRef.current.currentTime = 0;
+                                    }
+                                }}
                             >
-                                <img src="/avatar.jpg" alt="Priyanshu" onError={(e) => {e.target.style.display='none'}} />
+                                <video
+                                    ref={avatarVideoRef}
+                                    src="/avatar_GIF.gif"
+                                    alt="Priyanshu"
+                                    muted
+                                    playsInline
+                                    loop={false}
+                                    style={{
+                                        width: '100%',
+                                        height: '100%',
+                                        borderRadius: '50%',
+                                        objectFit: 'cover',
+                                        display: 'block'
+                                    }}
+                                />
                             </div>
                             <div className="header-info">
                                 <h2>Chat with Priyanshu</h2>
