@@ -55,7 +55,7 @@
 
         /* ===== HEADER ===== */
         .chat-header {
-            padding: 14px 16px;
+            padding: 12px 14px;
             background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%);
             color: white;
             display: flex;
@@ -1199,8 +1199,25 @@
                         <div className="header-left">
                             <div 
                                 className="avatar"
-                                onMouseEnter={() => avatarVideoRef.current?.play()}
+                                onMouseEnter={() => {
+                                    if (avatarVideoRef.current) {
+                                        avatarVideoRef.current.currentTime = 0;
+                                        avatarVideoRef.current.play().catch(e => console.log('Play failed:', e));
+                                    }
+                                }}
                                 onMouseLeave={() => {
+                                    if (avatarVideoRef.current) {
+                                        avatarVideoRef.current.pause();
+                                        avatarVideoRef.current.currentTime = 0;
+                                    }
+                                }}
+                                onTouchStart={() => {
+                                    if (avatarVideoRef.current) {
+                                        avatarVideoRef.current.currentTime = 0;
+                                        avatarVideoRef.current.play().catch(e => console.log('Play failed:', e));
+                                    }
+                                }}
+                                onTouchEnd={() => {
                                     if (avatarVideoRef.current) {
                                         avatarVideoRef.current.pause();
                                         avatarVideoRef.current.currentTime = 0;
@@ -1210,11 +1227,10 @@
                                 <video
                                     ref={avatarVideoRef}
                                     src="/avatar_GIF.mp4"
-                                    alt="Priyanshu"
                                     muted
                                     playsInline
-                                    loop={false}
-                                    preload="metadata"
+                                    preload="auto"
+                                    poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23fbbf24' width='100' height='100'/%3E%3C/svg%3E"
                                     style={{
                                         width: '100%',
                                         height: '100%',
