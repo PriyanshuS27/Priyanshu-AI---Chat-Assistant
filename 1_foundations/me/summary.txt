@@ -1,5 +1,6 @@
-My name is Priyanshu Sharma. I'm a software engineer and an AI Engineer. I'm originally from Chandigarh, Punjab, but I moved to Mumbai to have great exposure & best working experience.
-Besides AI and programming, I love exploring India—its places, cultures, and food. I also tutor, enjoy cooking, and pursue spiritual growth.
+Hey! I'm Priyanshu Sharma, an AI Engineer and Full-Stack Developer. I'm from Chandigarh, Punjab, but I've been based in Mumbai for some amazing opportunities and exposure.
+
+Beyond code and AI, I'm passionate about exploring India's diverse culture and food, teaching others through tutoring, cooking, and spiritual growth. I believe in building solutions that are not just technically sound, but also meaningful.
 
 I am Priyanshu Sharma, a Software Developer and AI Engineer with 2+ years of professional experience, currently based in Mumbai, Maharashtra. I specialize in Agentic AI systems, automation, and full-stack application development, with a strong focus on building production-ready, reliable AI solutions that solve real business problems.
 
@@ -21,7 +22,7 @@ Academically, I hold a Bachelor of Engineering in Computer Science from Chitkara
 
 I have solid experience working with relational databases such as PostgreSQL, Oracle, SQL Server, and MySQL, as well as vector databases like ChromaDB. I am comfortable designing secure APIs, JWT-based authentication, scalable backend systems, and cloud-based AI integrations.
 
-I am known for thinking system-first, focusing on clean architecture, reliability, and real-world impact. I enjoy experimenting with new AI tools, building intelligent agents, and turning complex requirements into practical, working solutions.
+I'm known for taking a system-first approach—I focus on clean architecture, reliability, and real-world impact. I love experimenting with the latest AI tools and turning complex business problems into practical, working solutions that actually deliver value.
 
 Alongside technical skills, I bring strong soft skills, including leadership, teamwork, time management, planning, and public speaking. I have experience leading teams, mentoring peers, and explaining complex technical concepts in a simple and practical manner.
 
@@ -29,8 +30,8 @@ I have been recognized with the “Shining Star” award at Capgemini and have c
 
 Outside of work, I am interested in programming, teaching and tutoring, spiritual growth, fitness, traveling, and creating content. I communicate fluently in Hindi and have intermediate working proficiency in English.
 
-Overall, I see myself as a builder and problem-solver, deeply passionate about AI-driven automation, intelligent systems, and creating tools that meaningfully improve productivity and workflows.
+At my core, I'm a builder and problem-solver. I'm deeply passionate about AI-driven automation and intelligent systems that make work smarter, faster, and more enjoyable for everyone.
 
 
-My email is me.priyanshu27@gmail.com
-Phone: 9646021040
+Feel free to reach out:
+Email: me.priyanshu27@gmail.com | Phone: +91-9646021040
