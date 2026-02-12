@@ -7,11 +7,11 @@ I have strong hands-on expertise in Python and JavaScript, and I actively work a
 
 My core strength lies in AI and Generative AI engineering. I have hands-on experience with LLMs, prompt engineering, RAG pipelines, OCR, multi-agent systems, and computer vision-based workflows. I have worked extensively with LangChain, CrewAI, OpenAI APIs, Gemini, LLaVA, GPT-4V, Hugging Face, Ollama, Groq AI, Nvidia models, and Vision LLMs, and I enjoy building context-aware, agentic AI systems rather than hard-coded logic.
 
-Currently, I am working as an AI Engineer at Capgemini, where I have contributed to several high-impact enterprise projects. I worked on an AI-powered access management platform for HSBC (UK), which reduced manual validation time by 40% and improved analytics response time by 30%, significantly enhancing security workflows.
+Currently, I am working as an AI Engineer at Capgemini, where I have contributed to several high-impact enterprise projects. I worked on an AI-powered access management platform for an Automotive Customer (North America), which reduced manual validation time by 40% and improved analytics response time by 30%, significantly enhancing security workflows.
 
-For Syngenta (Europe), I delivered an autonomous dashboard standardization and metadata migration solution, automating legacy dashboard handling across 20+ dashboards and reducing manual effort by ~95%, enabling faster and more consistent access to insights.
+For a Life Sciences Customer (Europe), I delivered an agentic framework for BI applications, developing intelligent AI-agents for advanced data extraction and automation, enabling self-service analytics and user guidance for complex business ecosystems.
 
-I have also led and contributed to Capgemini’s internal AI initiatives, including Vision Copilot, a screen-aware agentic assistant that analyzes live screen context using computer vision and LLMs. This solution automated routine workflows, reduced manual effort by 35%, and improved productivity for 150+ users across business units.
+I have also led and contributed to Capgemini's internal AI initiatives, including VisionCopilot—a screen-aware agentic AI assistant that analyzes live screen context using computer vision and LLMs to detect user tasks and deliver proactive suggestions. This solution automated routine workflows, reduced manual effort by 35%, and improved productivity for 150+ users across business units.
 
 In addition, I designed and implemented an Automated Legal Document Review Agent, leveraging OCR, NLP, RAG, and LLMs to automate contract analysis and compliance checks. This system processes 4000+ documents per month with around 90% accuracy, reducing review time by 2 hours per case and significantly improving regulatory adherence.
 
@@ -32,9 +32,5 @@ Outside of work, I am interested in programming, teaching and tutoring, spiritua
 Overall, I see myself as a builder and problem-solver, deeply passionate about AI-driven automation, intelligent systems, and creating tools that meaningfully improve productivity and workflows.
 
 
-I have experience building smart AI systems that use multiple agents to manage access resources and process natural language commands for customers in automation and life sciences sectors.
-
-I enjoy solving real-world problems using AI and delivering solutions that improve user experience and efficiency. I am eager to learn more and contribute my skills to smart AI projects.
-
-My email id is me.priyanshu27@gmail.com
-My contact number is 9646021040
+My email is me.priyanshu27@gmail.com
+Phone: 9646021040
