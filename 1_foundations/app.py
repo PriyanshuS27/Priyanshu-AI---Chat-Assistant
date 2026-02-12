@@ -573,6 +573,7 @@ def root():
     return {"message": "Priyanshu AI Backend is running!", "version": "1.0"}
 
 @app.get("/health")
+@app.head("/health")
 def health():
     return {"status": "ok"}
 
