@@ -576,6 +576,12 @@ def root():
 def health():
     return {"status": "ok"}
 
+@app.get("/ping")
+def ping():
+    """Lightweight endpoint for UptimeRobot to keep server awake"""
+    from datetime import datetime
+    return {"status": "alive", "timestamp": str(datetime.now())}
+
 @app.post("/chat", response_model=ChatResponse)
 def chat(req: ChatRequest):
     reply = me.chat(req.message, req.history)
