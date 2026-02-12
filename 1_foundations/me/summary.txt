@@ -18,6 +18,8 @@ In addition, I designed and implemented an Automated Legal Document Review Agent
 
 Before Capgemini, I worked as an Associate Engineer at Teqmavens Pvt Ltd, where I contributed to CRM-based client projects, collaborated with cross-functional teams, and consistently delivered tasks ahead of schedule.
 
+Priyanshu AI Twin Chatbot: I created a full-stack chatbot showcasing my end-to-end development skills. It features a modern React frontend with voice-to-text input, dark mode toggle, and animated interactions, paired with a FastAPI backend powered by Google's Gemini API. The project is live on Render and demonstrates my ability to build production-ready, user-friendly AI applications.
+
 Academically, I hold a Bachelor of Engineering in Computer Science from Chitkara University, with a CGPA of 9.66, which reflects my strong fundamentals in computer science, problem-solving, and software engineering.
 
 I have solid experience working with relational databases such as PostgreSQL, Oracle, SQL Server, and MySQL, as well as vector databases like ChromaDB. I am comfortable designing secure APIs, JWT-based authentication, scalable backend systems, and cloud-based AI integrations.
