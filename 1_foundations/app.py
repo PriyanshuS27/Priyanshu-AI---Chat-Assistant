@@ -568,8 +568,8 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     reply: str
 
-@app.get("/")
-def root():
+@app.get("/api")
+def api_status():
     return {"message": "Priyanshu AI Backend is running!", "version": "1.0"}
 
 @app.get("/health")
