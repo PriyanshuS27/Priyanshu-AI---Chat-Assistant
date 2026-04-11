@@ -27,7 +27,10 @@ export default function Chat() {
     setInput("");
     setLoading(true);
 
-    const API_URL = 'https://priyanshu-ai-chat-assistant.onrender.com';
+    // Use localhost for development, Render for production
+    const API_URL = window.location.hostname === 'localhost' 
+      ? 'http://localhost:8000' 
+      : 'https://priyanshu-ai-chat-assistant.onrender.com';
 
     try {
       const res = await fetch(`${API_URL}/chat`, {

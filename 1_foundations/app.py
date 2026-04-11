@@ -556,10 +556,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Serve static files (frontend HTML)
+# Serve static files (frontend HTML and public assets)
 frontend_path = Path(__file__).resolve().parent.parent / "frontend"
 if frontend_path.exists():
     app.mount("/frontend", StaticFiles(directory=str(frontend_path)), name="frontend")
+
+# Serve public folder assets (avatar, etc)
+public_path = Path(__file__).resolve().parent.parent / "frontend" / "public"
+if public_path.exists():
+    app.mount("/public", StaticFiles(directory=str(public_path), html=False), name="public")
 
 class ChatRequest(BaseModel):
     message: str

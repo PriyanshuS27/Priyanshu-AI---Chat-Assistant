@@ -1130,7 +1130,11 @@
                 setUserTyping(true);
 
                 try {
-                    const res = await fetch("https://priyanshu-ai-chat-assistant.onrender.com/chat", {
+                    const API_URL = window.location.hostname === 'localhost' 
+                        ? 'http://localhost:8000' 
+                        : 'https://priyanshu-ai-chat-assistant.onrender.com';
+                    
+                    const res = await fetch(`${API_URL}/chat`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
@@ -1236,7 +1240,7 @@
                             >
                                 <video
                                     ref={avatarVideoRef}
-                                    src="/avatar_GIF.mp4"
+                                    src="/public/avatar_GIF.mp4"
                                     muted
                                     autoPlay
                                     loop
