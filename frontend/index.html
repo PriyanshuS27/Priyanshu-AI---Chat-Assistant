@@ -1207,6 +1207,16 @@
                 setShowConfirmDialog(false);
             };
 
+            const getAvatarUrl = () => {
+                const hostname = window.location.hostname;
+                // For localhost and local development
+                if (hostname === 'localhost' || hostname === '127.0.0.1') {
+                    return '/public/avatar_GIF.mp4';
+                }
+                // For Vercel/Render deployment - use Render backend
+                return 'https://priyanshu-ai-chat-assistant.onrender.com/public/avatar_GIF.mp4';
+            };
+
             return (
                 <div className={`chat-container ${darkMode ? 'dark-mode' : 'light-mode'}`}>
                     <div className="chat-header">
@@ -1240,7 +1250,7 @@
                             >
                                 <video
                                     ref={avatarVideoRef}
-                                    src="/public/avatar_GIF.mp4"
+                                    src={getAvatarUrl()}
                                     muted
                                     autoPlay
                                     loop
