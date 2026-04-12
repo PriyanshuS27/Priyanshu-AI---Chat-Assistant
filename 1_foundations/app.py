@@ -596,6 +596,17 @@ def resume_info():
         }
     return {"available": False}
 
+@app.get("/resume/download")
+def download_resume():
+    """Download the resume PDF file"""
+    if me.resume_available:
+        return FileResponse(
+            path=str(me.resume_path),
+            filename="Priyanshu_Sharma_Resume.pdf",
+            media_type="application/pdf"
+        )
+    return {"error": "Resume not available"}
+
 @app.get("/")
 def serve_frontend():
     """Serve the frontend HTML"""

@@ -1279,13 +1279,27 @@
                         </div>
                         <div className="header-actions">
                             <button className="header-btn" onClick={() => {
-                                const link = document.createElement('a');
-                                link.href = '/me/Priyanshu_Sharma_Resume.pdf';
-                                link.download = 'Priyanshu_Sharma_Resume.pdf';
-                                document.body.appendChild(link);
-                                link.click();
-                                document.body.removeChild(link);
-                                showToast("📥 Resume downloaded!");
+                                const backendUrl = window.location.hostname === 'localhost' 
+                                    ? 'http://localhost:8000' 
+                                    : 'https://priyanshu-ai-chat-assistant.onrender.com';
+                                
+                                fetch(`${backendUrl}/resume/download`)
+                                    .then(response => response.blob())
+                                    .then(blob => {
+                                        const url = window.URL.createObjectURL(blob);
+                                        const link = document.createElement('a');
+                                        link.href = url;
+                                        link.download = 'Priyanshu_Sharma_Resume.pdf';
+                                        document.body.appendChild(link);
+                                        link.click();
+                                        document.body.removeChild(link);
+                                        window.URL.revokeObjectURL(url);
+                                        showToast("📥 Resume downloaded!");
+                                    })
+                                    .catch(err => {
+                                        console.error('Download failed:', err);
+                                        showToast("❌ Download failed!");
+                                    });
                             }} title="Download resume">
                                 📥
                             </button>
