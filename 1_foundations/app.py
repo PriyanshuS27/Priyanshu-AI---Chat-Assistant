@@ -268,7 +268,7 @@ class Me:
         base_dir = Path(__file__).resolve().parent
         
         # Load resume PDF
-        self.resume_path = base_dir / "me" / "Priyanshu_Sharma_Resume.pdf"
+        self.resume_path = base_dir / "me" / "Priyanshu_Sharma_AI_Engineer.pdf"
         self.resume_available = self.resume_path.is_file()
         if self.resume_available:
             logging.info("✓ Resume PDF found at: %s", self.resume_path)
