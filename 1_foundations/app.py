@@ -322,7 +322,14 @@ particularly questions related to {self.name}'s career, background, skills and e
 Your responsibility is to represent {self.name} for interactions on the website as faithfully as possible. \
 You are given a summary of {self.name}'s background and LinkedIn profile which you can use to answer questions. \
 Be professional and engaging, as if talking to a potential client or future employer who came across the website. \
-If you don't know the answer to any question, use your record_unknown_question tool to record the question that you couldn't answer, even if it's about something trivial or unrelated to career. \
+\
+IMPORTANT INSTRUCTIONS FOR ANSWERING:\
+- When asked about {self.name}'s professional experience, skills, or abilities: ALWAYS provide a direct answer. Even 'Yes' or 'No' are valid if you explain them.\
+- Example: 'Do you have 2 years AI experience?' → 'Yes, I have 2+ years working with AI and agentic systems.'\
+- Example: 'Can you work as AI Engineer?' → 'Yes, based on my background in...' or 'I'm qualified to...'\
+- NEVER reject career-related questions. Always provide your best answer based on the context given.\
+\
+Only use your record_unknown_question tool for questions that are COMPLETELY off-topic and unrelated to anything in {self.name}'s background. \
 If the user is engaging in discussion, try to steer them towards getting in touch via email; ask for their email and record it using your record_user_details tool. "
 
         # Add resume availability info
@@ -440,19 +447,16 @@ Feel free to ask any questions! 😊"""
         # Clean up the response - remove any extra metadata or tool confirmations for display
         text = (text or "").strip()
         
-        # Additional heuristic: if the model response looks like raw SDK/JSON
-        # diagnostic output (e.g. contains 'candidates', 'model_version',
-        # 'usage_metadata' etc.) or is very short/not human-readable, treat it
-        # as an unanswered/out-of-scope reply and record the question.
+        # Smart validation: only record as unknown if REALLY no content
+        # Professional/career questions should get answers even if short
         try:
             stripped = text
             looks_like_sdk_json = False
             if stripped.startswith("{") and any(k in stripped for k in ("\"candidates\"","\"model_version\"","\"usage_metadata\"","\"token_count\"","candidates","model_version")):
                 looks_like_sdk_json = True
-            # also treat extremely short or non-alphanumeric responses as non-answers
-            alpha_num_chars = len(re.findall(r"[A-Za-z0-9]", stripped))
-            if looks_like_sdk_json or alpha_num_chars < 20:
-                logging.warning("Detected SDK-like or malformed response: looks_like_sdk=%s alpha_chars=%d", looks_like_sdk_json, alpha_num_chars)
+            
+            if looks_like_sdk_json:
+                logging.warning("Detected SDK-like response: %s", stripped[:100])
                 try:
                     logging.info("Recording unknown question via SDK detection: %s", message)
                     record_unknown_question(message)
@@ -461,63 +465,70 @@ Feel free to ask any questions! 😊"""
                 except Exception as e:
                     logging.exception("Automatic record for SDK-like response failed: %s", e)
                     print(f"Warning: automatic record for SDK-like response failed: {e}", flush=True)
+            
+            # Check if this is a professional/career question
+            professional_keywords = ["experience", "skill", "engineer", "developer", "able", "can", 
+                                   "work", "years", "qualified", "background", "know", "familiar",
+                                   "capability", "competent", "proficient", "expert", "knowledge"]
+            is_professional_question = any(kw in message.lower() for kw in professional_keywords)
+            
+            alpha_num_chars = len(re.findall(r"[A-Za-z0-9]", stripped))
+            
+            # For professional questions: accept even short answers (min 5 chars)
+            # For other questions: stricter threshold (min 15 chars)
+            min_threshold = 5 if is_professional_question else 15
+            
+            if alpha_num_chars < min_threshold:
+                logging.warning("Response too short: alpha_chars=%d threshold=%d professional_q=%s", 
+                               alpha_num_chars, min_threshold, is_professional_question)
+                try:
+                    logging.info("Recording unknown question: %s", message)
+                    record_unknown_question(message)
+                    text = "I'm sorry — I couldn't answer that. I've recorded the question for follow-up."
+                    return text
+                except Exception as e:
+                    logging.exception("Automatic record failed: %s", e)
+                    print(f"Warning: automatic record failed: {e}", flush=True)
         except Exception as _e:
-            logging.exception("SDK-like response detection failed: %s", _e)
-            print(f"Warning: SDK-like response detection failed: {_e}", flush=True)
+            logging.exception("Response validation failed: %s", _e)
+            print(f"Warning: response validation failed: {_e}", flush=True)
 
-        # Heuristic fallback: if the model replied in plain language that it will
-        # record or make a note (e.g. "I'll record that", "I will make a note"),
-        # treat that as an implicit record request and call `record_unknown_question`
-        # with the original user message. This is a safety net for models that
-        # describe the action instead of emitting the JSON tool call.
+        # Fallback: Only record as unknown if model EXPLICITLY says it can't answer
+        # Don't record if model gives any substantive answer (even with caveats)
         try:
             lower_text = text.lower()
-            fallback_phrases = [
-                # Recording phrases
+            
+            # STRICT: Only these phrases mean "definitely can't answer"
+            strict_no_answer_phrases = [
+                "i have no knowledge",
+                "i don't have any",
+                "i'm completely unaware",
+                "i have no information",
+                "no clue",
+                "no idea whatsoever",
+                "i cannot help",
+            ]
+            
+            # Recording phrases (when model emits these, it's really recording as unknown)
+            recording_phrases = [
                 "i will record",
                 "i'll record",
                 "i've recorded",
-                "i have recorded",
-                "i can record",
-                "i could record",
                 "i will make a note",
-                "i'll make a note",
-                "i have made a note",
-                "i'll note",
-                "i will note",
-                "i've noted",
-                "i have noted",
-                "i will record that",
                 "recorded your question",
-                "i've recorded your",
-                "record that",
-                "record that question",
-                "i can help record",
-                "i'll help record",
-                # Out-of-scope phrases (when model politely declines)
-                "outside the scope",
-                "outside my scope",
-                "outside of my scope",
-                "not related to my professional",
-                "not related to my background",
-                "not my area of expertise",
-                "outside of my expertise",
-                "that question is outside",
-                "that's outside the scope",
-                "i'm afraid that's",
-                "i'm sorry, that question is outside",
-                "outside of my knowledge",
-                "not something i can",
-                "not something i'm able to",
             ]
-            if any(p in lower_text for p in fallback_phrases):
-                logging.info("Detected fallback phrase in response, calling record_unknown_question for: %s", message)
+            
+            has_strict_no_answer = any(p in lower_text for p in strict_no_answer_phrases)
+            has_recording_phrase = any(p in lower_text for p in recording_phrases)
+            
+            if has_recording_phrase or has_strict_no_answer:
+                logging.info("Detected explicit no-answer in response, calling record_unknown_question for: %s", message)
                 try:
                     result = record_unknown_question(message)
-                    logging.info("Fallback record result: %s", result)
+                    logging.info("Record result: %s", result)
                 except Exception as e:
-                    logging.exception("Fallback record failed: %s", e)
-                    print(f"Warning: fallback record failed: {e}", flush=True)
+                    logging.exception("Record failed: %s", e)
+                    print(f"Warning: record failed: {e}", flush=True)
         except Exception as e:
             logging.exception("Fallback detection failed: %s", e)
             print(f"Warning: fallback detection failed: {e}", flush=True)
