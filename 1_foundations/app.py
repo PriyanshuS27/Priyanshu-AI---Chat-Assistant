@@ -324,18 +324,13 @@ You are given a summary of {self.name}'s background and LinkedIn profile which y
 Be professional and engaging, as if talking to a potential client or future employer who came across the website. \
 \
 IMPORTANT INSTRUCTIONS FOR ANSWERING:\
-- When asked about {self.name}'s professional experience, skills, or abilities: ALWAYS provide a direct answer based on context.\
-- Answer even with short responses if needed: 'Yes', 'No', 'I have experience in...', etc.\
+- When asked about {self.name}'s professional experience, skills, or abilities: ALWAYS provide a direct answer. Even 'Yes' or 'No' are valid if you explain them.\
 - Example: 'Do you have 2 years AI experience?' → 'Yes, I have 2+ years working with AI and agentic systems.'\
 - Example: 'Can you work as AI Engineer?' → 'Yes, based on my background in...' or 'I'm qualified to...'\
+- NEVER reject career-related questions. Always provide your best answer based on the context given.\
 \
-WHEN TO USE record_unknown_question TOOL:\
-- If someone asks about something COMPLETELY unrelated to {self.name}'s profile (e.g., how to cook pizza, quantum physics jokes, etc.)\
-- If you genuinely cannot find relevant information in the provided context\
-- DO NOT use this tool for any question that COULD be answered about career/background\
-\
-Always be helpful and steer users toward getting in touch via email if they have specific questions. \
-If the user is engaging, try to record their email using the record_user_details tool. "
+Only use your record_unknown_question tool for questions that are COMPLETELY off-topic and unrelated to anything in {self.name}'s background. \
+If the user is engaging in discussion, try to steer them towards getting in touch via email; ask for their email and record it using your record_user_details tool. "
 
         # Add resume availability info
         resume_info = "\n**IMPORTANT: You have a resume PDF available.**\n\
@@ -489,7 +484,7 @@ Feel free to ask any questions! 😊"""
                 try:
                     logging.info("Recording unknown question: %s", message)
                     record_unknown_question(message)
-                    text = "I'm sorry — I couldn't answer that specific question. I've recorded it for follow-up.\n\n💬 **Direct contact:**\n📧 Email: me.priyanshu27@gmail.com\n📱 Phone: +91 9646021040\n\nFeel free to reach out directly with any questions!"
+                    text = "I'm sorry — I couldn't answer that. I've recorded the question for follow-up."
                     return text
                 except Exception as e:
                     logging.exception("Automatic record failed: %s", e)
@@ -498,15 +493,13 @@ Feel free to ask any questions! 😊"""
             logging.exception("Response validation failed: %s", _e)
             print(f"Warning: response validation failed: {_e}", flush=True)
 
-        # Fallback: Detect when model says it can't answer and record as unknown
-        # Balance: Not too strict, not too lenient
+        # Fallback: Only record as unknown if model EXPLICITLY says it can't answer
+        # Don't record if model gives any substantive answer (even with caveats)
         try:
             lower_text = text.lower()
             
-            # Detect genuine "I don't know" responses
-            no_answer_phrases = [
-                "i don't know",
-                "i'm not familiar",
+            # STRICT: Only these phrases mean "definitely can't answer"
+            strict_no_answer_phrases = [
                 "i have no knowledge",
                 "i don't have any",
                 "i'm completely unaware",
@@ -514,15 +507,9 @@ Feel free to ask any questions! 😊"""
                 "no clue",
                 "no idea whatsoever",
                 "i cannot help",
-                "i cannot answer",
-                "that's outside",
-                "beyond my knowledge",
-                "not in my expertise",
-                "i haven't worked with",
-                "i have no experience with",
             ]
             
-            # Recording phrases (when model explicitly says it's recording)
+            # Recording phrases (when model emits these, it's really recording as unknown)
             recording_phrases = [
                 "i will record",
                 "i'll record",
@@ -531,18 +518,13 @@ Feel free to ask any questions! 😊"""
                 "recorded your question",
             ]
             
-            has_no_answer = any(p in lower_text for p in no_answer_phrases)
+            has_strict_no_answer = any(p in lower_text for p in strict_no_answer_phrases)
             has_recording_phrase = any(p in lower_text for p in recording_phrases)
             
-            # Only record if model explicitly said it doesn't know OR if recording phrase detected
-            if has_no_answer or has_recording_phrase:
-                logging.info("Detected no-answer in response (no_answer=%s, recording=%s), calling record_unknown_question for: %s", 
-                            has_no_answer, has_recording_phrase, message)
+            if has_recording_phrase or has_strict_no_answer:
+                logging.info("Detected explicit no-answer in response, calling record_unknown_question for: %s", message)
                 try:
                     result = record_unknown_question(message)
-                    # If this was detected, replace with better message
-                    if has_no_answer and not has_recording_phrase:
-                        text = "I'm sorry — I don't have information about that. I've recorded your question for follow-up.\n\n💬 **Direct contact:**\n📧 Email: me.priyanshu27@gmail.com\n📱 Phone: +91 9646021040\n\nFeel free to reach out directly!"
                     logging.info("Record result: %s", result)
                 except Exception as e:
                     logging.exception("Record failed: %s", e)
