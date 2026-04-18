@@ -48,6 +48,13 @@ Thumbs.db
 
 # Testing
 .pytest_cache/
+test_local_simple.py
+test_complete.py
+test_caching.py
+test_output.txt
+test_local_simple.py
+test_complete.py
+test_output.txt
 .coverage
 htmlcov/
 

@@ -16,6 +16,8 @@ from pathlib import Path
 import gradio as gr
 import ssl
 import logging
+import time
+import hashlib
 ssl._create_default_https_context = ssl._create_unverified_context
 
 load_dotenv(override=True)
@@ -47,6 +49,40 @@ if not api_key:
 
 # Configure the google.generativeai client and use GenerativeModel.generate_content
 genai.configure(api_key=api_key)
+
+# ===== RESPONSE CACHE & RETRY CONFIG =====
+RESPONSE_CACHE = {}  # Simple in-memory cache: {question_hash: (response, timestamp)}
+CACHE_TTL = 21600  # Cache expires after 6 hours (6 * 60 * 60 = 21600 seconds)
+RETRY_CONFIG = {
+    "max_retries": 3,
+    "initial_delay": 2,  # Start with 2 seconds
+    "backoff_factor": 2,  # Double delay each retry (2s → 4s → 8s)
+}
+
+def create_cache_key(text):
+    """Create a hash key for caching responses"""
+    return hashlib.md5(text.lower().strip().encode()).hexdigest()
+
+def get_cached_response(question):
+    """Get response from cache if available and not expired"""
+    cache_key = create_cache_key(question)
+    if cache_key in RESPONSE_CACHE:
+        response, timestamp = RESPONSE_CACHE[cache_key]
+        if time.time() - timestamp < CACHE_TTL:
+            logging.info("✓ Cache HIT for question: %s", question[:50])
+            return response
+        else:
+            # Cache expired, remove it
+            del RESPONSE_CACHE[cache_key]
+    return None
+
+def cache_response(question, response):
+    """Store response in cache"""
+    cache_key = create_cache_key(question)
+    RESPONSE_CACHE[cache_key] = (response, time.time())
+    logging.info("✓ Cached response for: %s", question[:50])
+
+# ===== END CACHE & RETRY CONFIG =====
 
 # Log notification service configuration at startup
 def log_notification_config():
@@ -83,13 +119,13 @@ def get_available_models():
 
 def call_gemini(prompt, model_name="gemini-2.5-flash"):
     """Call Gemini via google.generativeai.GenerativeModel.generate_content.
+    Includes retry logic for rate limiting and transient errors.
     Try a couple of common parameter shapes for compatibility across SDK versions.
-    Returns the raw response object.
+    Returns the raw response object or raises exception after max retries.
     """
     Gen = getattr(genai, "GenerativeModel", None)
     if not Gen:
         raise RuntimeError("google.generativeai.GenerativeModel not available in this environment")
-    model = Gen(model_name)
     
     # Set generation config with higher token limit to avoid truncation
     generation_config = {
@@ -99,16 +135,54 @@ def call_gemini(prompt, model_name="gemini-2.5-flash"):
         "max_output_tokens": 2048,  # Increased from default to prevent truncation
     }
     
-    # Try simple string argument first
-    try:
-        return model.generate_content(prompt, generation_config=generation_config)
-    except TypeError:
-        # Some versions expect a dict or list of content blocks
+    max_retries = RETRY_CONFIG["max_retries"]
+    initial_delay = RETRY_CONFIG["initial_delay"]
+    backoff_factor = RETRY_CONFIG["backoff_factor"]
+    
+    last_error = None
+    
+    for attempt in range(max_retries):
         try:
-            return model.generate_content({"content": prompt}, generation_config=generation_config)
-        except Exception:
-            # last resort: try a named argument
-            return model.generate_content(inputs=prompt, generation_config=generation_config)
+            model = Gen(model_name)
+            
+            # Try simple string argument first
+            try:
+                response = model.generate_content(prompt, generation_config=generation_config)
+                logging.info("✓ Gemini API call successful (attempt %d/%d)", attempt + 1, max_retries)
+                return response
+            except TypeError:
+                # Some versions expect a dict or list of content blocks
+                try:
+                    response = model.generate_content({"content": prompt}, generation_config=generation_config)
+                    logging.info("✓ Gemini API call successful (attempt %d/%d)", attempt + 1, max_retries)
+                    return response
+                except Exception:
+                    # last resort: try a named argument
+                    response = model.generate_content(inputs=prompt, generation_config=generation_config)
+                    logging.info("✓ Gemini API call successful (attempt %d/%d)", attempt + 1, max_retries)
+                    return response
+        
+        except Exception as e:
+            last_error = e
+            error_msg = str(e).lower()
+            
+            # Check if it's a rate limit error or transient error
+            is_rate_limit = "429" in str(e) or "quota" in error_msg or "too many requests" in error_msg
+            is_transient = "timeout" in error_msg or "temporary" in error_msg or "service unavailable" in error_msg
+            
+            if (is_rate_limit or is_transient) and attempt < max_retries - 1:
+                # Calculate delay with exponential backoff
+                delay = initial_delay * (backoff_factor ** attempt)
+                logging.warning(
+                    "⚠ API error (attempt %d/%d): %s. Retrying in %d seconds...", 
+                    attempt + 1, max_retries, str(e)[:100], delay
+                )
+                time.sleep(delay)
+                continue
+            else:
+                # Not a retryable error or max retries reached
+                logging.error("✗ Gemini API failed (attempt %d/%d): %s", attempt + 1, max_retries, str(e)[:200])
+                raise
    
 def push(text):
     tg_token = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -367,162 +441,199 @@ Feel free to ask any questions! 😊"""
             
             return response_text
         
+        # ===== CHECK CACHE FIRST =====
+        cached_response = get_cached_response(message)
+        if cached_response:
+            return cached_response
+        
         prompt = self.system_prompt() + "\n" + message
-        # Use compatibility wrapper to call Gemini across client versions
-        response = call_gemini(prompt, model_name="gemini-2.5-flash")
         
-        # Check if response was truncated due to token limit
-        finish_reason = getattr(response, "finish_reason", None)
-        if finish_reason and "LENGTH" in str(finish_reason).upper():
-            logging.warning("Response may be truncated due to token limit. Finish reason: %s", finish_reason)
-        
-        # Try several safe extraction methods in order
+        # ===== CALL GEMINI WITH ERROR HANDLING =====
         text = None
-        # 1) try direct attribute access
         try:
-            text = getattr(response, "text", None)
-        except Exception as e:
-            print(f"Warning: direct response.text access failed: {e}", flush=True)
-
-        # 2) if still none, try candidates
-        if not text:
+            # Use compatibility wrapper to call Gemini across client versions
+            response = call_gemini(prompt, model_name="gemini-2.5-flash")
+            
+            # Check if response was truncated due to token limit
+            finish_reason = getattr(response, "finish_reason", None)
+            if finish_reason and "LENGTH" in str(finish_reason).upper():
+                logging.warning("Response may be truncated due to token limit. Finish reason: %s", finish_reason)
+            
+            # Try several safe extraction methods in order
+            text = None
+            # 1) try direct attribute access
             try:
-                if hasattr(response, "candidates") and response.candidates:
-                    cand = response.candidates[0]
-                    for attr in ("content", "text", "output", "parts"):
-                        val = getattr(cand, attr, None)
-                        if val:
-                            if isinstance(val, str):
-                                text = val
-                                break
-                            if isinstance(val, list) and len(val) > 0:
-                                first = val[0]
-                                if isinstance(first, str):
-                                    text = first
-                                else:
-                                    text = getattr(first, "text", None) or str(first)
-                                break
-                            text = str(val)
-                            break
-            except Exception as e2:
-                print(f"Warning: failed to extract candidate text: {e2}", flush=True)
+                text = getattr(response, "text", None)
+            except Exception as e:
+                print(f"Warning: direct response.text access failed: {e}", flush=True)
 
-        # 3) last-resort stringify
-        if not text:
-            try:
-                to_dict_fn = getattr(response, "to_dict", None)
-                if callable(to_dict_fn):
-                    text = json.dumps(to_dict_fn(), default=str)
-                else:
-                    text = json.dumps(getattr(response, "__dict__", {}), default=str)
-            except Exception:
+            # 2) if still none, try candidates
+            if not text:
                 try:
-                    text = str(response)
+                    if hasattr(response, "candidates") and response.candidates:
+                        cand = response.candidates[0]
+                        for attr in ("content", "text", "output", "parts"):
+                            val = getattr(cand, attr, None)
+                            if val:
+                                if isinstance(val, str):
+                                    text = val
+                                    break
+                                if isinstance(val, list) and len(val) > 0:
+                                    first = val[0]
+                                    if isinstance(first, str):
+                                        text = first
+                                    else:
+                                        text = getattr(first, "text", None) or str(first)
+                                    break
+                                text = str(val)
+                                break
+                except Exception as e2:
+                    print(f"Warning: failed to extract candidate text: {e2}", flush=True)
+
+            # 3) last-resort stringify
+            if not text:
+                try:
+                    to_dict_fn = getattr(response, "to_dict", None)
+                    if callable(to_dict_fn):
+                        text = json.dumps(to_dict_fn(), default=str)
+                    else:
+                        text = json.dumps(getattr(response, "__dict__", {}), default=str)
                 except Exception:
-                    text = "Sorry — the model returned no text."
+                    try:
+                        text = str(response)
+                    except Exception:
+                        text = "Sorry — the model returned no text."
 
-        # At this point we have response text (or a fallback string). Process potential tool JSON.
-        try:
-            # extract_tool_json is defined later in the module; call at runtime
-            tool_call = extract_tool_json(text)
-            if tool_call:
-                tool = tool_call.get("tool")
-                args = tool_call.get("args", {})
-                if tool in ALLOWED_TOOLS:
-                    result = ALLOWED_TOOLS[tool](**args)
-                    # remove the JSON snippet before showing to user
-                    cleaned = re.sub(r'```json[\s\S]*?```', '', text)
-                    cleaned = re.sub(r'\{\s*"tool"[\s\S]*?\}', '', cleaned)
-                    return cleaned.strip()
-        except Exception as e:
-            print(f"Warning: tool extraction/exec failed: {e}", flush=True)
+            # At this point we have response text (or a fallback string). Process potential tool JSON.
+            try:
+                # extract_tool_json is defined later in the module; call at runtime
+                tool_call = extract_tool_json(text)
+                if tool_call:
+                    tool = tool_call.get("tool")
+                    args = tool_call.get("args", {})
+                    if tool in ALLOWED_TOOLS:
+                        result = ALLOWED_TOOLS[tool](**args)
+                        # remove the JSON snippet before showing to user
+                        cleaned = re.sub(r'```json[\s\S]*?```', '', text)
+                        cleaned = re.sub(r'\{\s*"tool"[\s\S]*?\}', '', cleaned)
+                        final_response = cleaned.strip()
+                        cache_response(message, final_response)
+                        return final_response
+            except Exception as e:
+                print(f"Warning: tool extraction/exec failed: {e}", flush=True)
 
-        # Clean up the response - remove any extra metadata or tool confirmations for display
-        text = (text or "").strip()
+            # Clean up the response - remove any extra metadata or tool confirmations for display
+            text = (text or "").strip()
+            
+            # Additional heuristic: if the model response looks like raw SDK/JSON
+            # diagnostic output (e.g. contains 'candidates', 'model_version',
+            # 'usage_metadata' etc.) or is very short/not human-readable, treat it
+            # as an unanswered/out-of-scope reply and record the question.
+            try:
+                stripped = text
+                looks_like_sdk_json = False
+                if stripped.startswith("{") and any(k in stripped for k in ("\"candidates\"","\"model_version\"","\"usage_metadata\"","\"token_count\"","candidates","model_version")):
+                    looks_like_sdk_json = True
+                # also treat extremely short or non-alphanumeric responses as non-answers
+                alpha_num_chars = len(re.findall(r"[A-Za-z0-9]", stripped))
+                if looks_like_sdk_json or alpha_num_chars < 20:
+                    logging.warning("Detected SDK-like or malformed response: looks_like_sdk=%s alpha_chars=%d", looks_like_sdk_json, alpha_num_chars)
+                    try:
+                        logging.info("Recording unknown question via SDK detection: %s", message)
+                        record_unknown_question(message)
+                        text = "I'm sorry — I couldn't answer that. I've recorded the question for follow-up."
+                        return text
+                    except Exception as e:
+                        logging.exception("Automatic record for SDK-like response failed: %s", e)
+                        print(f"Warning: automatic record for SDK-like response failed: {e}", flush=True)
+            except Exception as _e:
+                logging.exception("SDK-like response detection failed: %s", _e)
+                print(f"Warning: SDK-like response detection failed: {_e}", flush=True)
+
+            # Heuristic fallback: if the model replied in plain language that it will
+            # record or make a note (e.g. "I'll record that", "I will make a note"),
+            # treat that as an implicit record request and call `record_unknown_question`
+            # with the original user message. This is a safety net for models that
+            # describe the action instead of emitting the JSON tool call.
+            try:
+                lower_text = text.lower()
+                fallback_phrases = [
+                    # Recording phrases
+                    "i will record",
+                    "i'll record",
+                    "i've recorded",
+                    "i have recorded",
+                    "i can record",
+                    "i could record",
+                    "i will make a note",
+                    "i'll make a note",
+                    "i have made a note",
+                    "i'll note",
+                    "i will note",
+                    "i've noted",
+                    "i have noted",
+                    "i will record that",
+                    "recorded your question",
+                    "i've recorded your",
+                    "record that",
+                    "record that question",
+                    "i can help record",
+                    "i'll help record",
+                    # Out-of-scope phrases (when model politely declines)
+                    "outside the scope",
+                    "outside my scope",
+                    "outside of my scope",
+                    "not related to my professional",
+                    "not related to my background",
+                    "not my area of expertise",
+                    "outside of my expertise",
+                    "that question is outside",
+                    "that's outside the scope",
+                    "i'm afraid that's",
+                    "i'm sorry, that question is outside",
+                    "outside of my knowledge",
+                    "not something i can",
+                    "not something i'm able to",
+                ]
+                if any(p in lower_text for p in fallback_phrases):
+                    logging.info("Detected fallback phrase in response, calling record_unknown_question for: %s", message)
+                    try:
+                        result = record_unknown_question(message)
+                        logging.info("Fallback record result: %s", result)
+                    except Exception as e:
+                        logging.exception("Fallback record failed: %s", e)
+                        print(f"Warning: fallback record failed: {e}", flush=True)
+            except Exception as e:
+                logging.exception("Fallback detection failed: %s", e)
+                print(f"Warning: fallback detection failed: {e}", flush=True)
+
+            # Cache successful response
+            cache_response(message, text)
+            return text
         
-        # Additional heuristic: if the model response looks like raw SDK/JSON
-        # diagnostic output (e.g. contains 'candidates', 'model_version',
-        # 'usage_metadata' etc.) or is very short/not human-readable, treat it
-        # as an unanswered/out-of-scope reply and record the question.
-        try:
-            stripped = text
-            looks_like_sdk_json = False
-            if stripped.startswith("{") and any(k in stripped for k in ("\"candidates\"","\"model_version\"","\"usage_metadata\"","\"token_count\"","candidates","model_version")):
-                looks_like_sdk_json = True
-            # also treat extremely short or non-alphanumeric responses as non-answers
-            alpha_num_chars = len(re.findall(r"[A-Za-z0-9]", stripped))
-            if looks_like_sdk_json or alpha_num_chars < 20:
-                logging.warning("Detected SDK-like or malformed response: looks_like_sdk=%s alpha_chars=%d", looks_like_sdk_json, alpha_num_chars)
-                try:
-                    logging.info("Recording unknown question via SDK detection: %s", message)
-                    record_unknown_question(message)
-                    text = "I'm sorry — I couldn't answer that. I've recorded the question for follow-up."
-                    return text
-                except Exception as e:
-                    logging.exception("Automatic record for SDK-like response failed: %s", e)
-                    print(f"Warning: automatic record for SDK-like response failed: {e}", flush=True)
-        except Exception as _e:
-            logging.exception("SDK-like response detection failed: %s", _e)
-            print(f"Warning: SDK-like response detection failed: {_e}", flush=True)
-
-        # Heuristic fallback: if the model replied in plain language that it will
-        # record or make a note (e.g. "I'll record that", "I will make a note"),
-        # treat that as an implicit record request and call `record_unknown_question`
-        # with the original user message. This is a safety net for models that
-        # describe the action instead of emitting the JSON tool call.
-        try:
-            lower_text = text.lower()
-            fallback_phrases = [
-                # Recording phrases
-                "i will record",
-                "i'll record",
-                "i've recorded",
-                "i have recorded",
-                "i can record",
-                "i could record",
-                "i will make a note",
-                "i'll make a note",
-                "i have made a note",
-                "i'll note",
-                "i will note",
-                "i've noted",
-                "i have noted",
-                "i will record that",
-                "recorded your question",
-                "i've recorded your",
-                "record that",
-                "record that question",
-                "i can help record",
-                "i'll help record",
-                # Out-of-scope phrases (when model politely declines)
-                "outside the scope",
-                "outside my scope",
-                "outside of my scope",
-                "not related to my professional",
-                "not related to my background",
-                "not my area of expertise",
-                "outside of my expertise",
-                "that question is outside",
-                "that's outside the scope",
-                "i'm afraid that's",
-                "i'm sorry, that question is outside",
-                "outside of my knowledge",
-                "not something i can",
-                "not something i'm able to",
-            ]
-            if any(p in lower_text for p in fallback_phrases):
-                logging.info("Detected fallback phrase in response, calling record_unknown_question for: %s", message)
-                try:
-                    result = record_unknown_question(message)
-                    logging.info("Fallback record result: %s", result)
-                except Exception as e:
-                    logging.exception("Fallback record failed: %s", e)
-                    print(f"Warning: fallback record failed: {e}", flush=True)
         except Exception as e:
-            logging.exception("Fallback detection failed: %s", e)
-            print(f"Warning: fallback detection failed: {e}", flush=True)
+            # ===== ERROR HANDLING =====
+            error_msg = str(e).lower()
+            
+            if "429" in str(e) or "quota" in error_msg or "too many requests" in error_msg:
+                error_response = "⏳ I'm experiencing high demand right now. Please try again in a moment. The server is rate-limited to prevent overuse of the API."
+                logging.error("✗ Rate limit error: %s", str(e)[:200])
+            elif "timeout" in error_msg or "timed out" in error_msg:
+                error_response = "⏱ The request took too long to process. Please try again with a simpler question."
+                logging.error("✗ Timeout error: %s", str(e)[:200])
+            elif "service unavailable" in error_msg or "500" in str(e):
+                error_response = "🚫 The AI service is temporarily unavailable. Please try again in a few moments."
+                logging.error("✗ Service unavailable: %s", str(e)[:200])
+            elif "authentication" in error_msg or "invalid" in error_msg or "unauthorized" in error_msg:
+                error_response = "🔐 There's an authentication issue with the AI service. Please contact support."
+                logging.error("✗ Authentication error: %s", str(e)[:200])
+            else:
+                error_response = "Sorry, I encountered an error processing your request. Please try again."
+                logging.error("✗ Unexpected error: %s", str(e)[:200])
+            
+            return error_response
+   
 
-        return text
    
 
 ALLOWED_TOOLS = {
